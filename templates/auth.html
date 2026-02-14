@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>VetRecorder — Авторизация</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --paper: #E6E2D6;
+            --ink: #121212;
+            --rust: #C85228;
+            --terra-green: #2A5A42;
+            --sun-gold: #D4A044;
+            --pad-sm: 12px;
+            --pad-md: 24px;
+            --pad-lg: 48px;
+            --pad-xl: 96px;
+            --border-width: 1.5px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+        body {
+            background-color: var(--paper);
+            color: var(--ink);
+            font-family: 'Syne', sans-serif;
+            overflow: hidden;
+            width: 100%;
+            min-height: 100vh;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            pointer-events: none;
+        }
+
+        button, a, .interactive, input { pointer-events: auto; cursor: pointer; text-decoration: none; color: inherit; }
+
+        header {
+            padding: var(--pad-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .brand-pill { display: inline-flex; align-items: center; gap: 8px; }
+        .status-dot {
+            width: 8px; height: 8px;
+            background-color: var(--rust);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: var(--pad-md);
+        }
+
+        .pill {
+            border: var(--border-width) solid var(--ink);
+            padding: 4px 16px;
+            border-radius: 50px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            background: var(--paper);
+            color: var(--ink);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pill:hover { background: var(--ink); color: var(--paper); }
+
+        .data-block {
+            position: absolute;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            line-height: 1.4;
+            color: var(--ink);
+            max-width: 150px;
+        }
+        .data-tl { top: 20%; left: 5%; text-align: left; }
+        .data-tr { top: 25%; right: 5%; text-align: right; }
+
+        .grunge-map {
+            width: 100%;
+            height: 250px;
+            min-height: 180px;
+            background-color: var(--rust);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            padding: var(--pad-md);
+            border-top: var(--border-width) solid var(--ink);
+        }
+        .map-texture {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--terra-green);
+            clip-path: polygon(0% 0%, 15% 10%, 25% 5%, 40% 25%, 35% 50%, 50% 60%, 60% 45%, 75% 55%, 85% 30%, 100% 40%, 100% 100%, 0% 100%);
+            opacity: 0.9;
+        }
+        .footer-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            color: var(--paper);
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            width: 480px;
+            max-width: 95vw;
+            padding: 40px;
+            position: relative;
+            box-shadow: 20px 20px 0px var(--ink);
+        }
+        .modal-header {
+            font-family: 'Abril Fatface', serif;
+            font-size: 2.5rem;
+            margin-bottom: 24px;
+            line-height: 1;
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 16px;
+        }
+        .modal-body {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        .auth-code-section {
+            margin-bottom: 24px;
+        }
+        .auth-code-input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid var(--ink);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            text-align: center;
+            margin-bottom: 16px;
+            background: var(--paper);
+        }
+        .auth-error {
+            color: var(--rust);
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .tg-auth-btn {
+            width: 100%;
+            background: var(--ink);
+            color: var(--paper);
+            padding: 16px;
+            border: 2px solid var(--ink);
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .tg-auth-btn:hover { background: #24A1DE; border-color: #24A1DE; }
+        .tg-auth-btn:active { transform: translate(2px, 2px); }
+        .tg-auth-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-close:hover { opacity: 0.7; }
+        .modal-footer {
+            margin-top: 24px;
+            text-align: center;
+        }
+        .modal-footer a {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--ink);
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+        .modal-footer a:hover { opacity: 1; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <header>
+            <a href="/" class="brand-pill interactive">
+                <div class="status-dot"></div>
+                <span>VET RECORDER</span>
+            </a>
+            <a href="/" class="pill interactive">На главную</a>
+        </header>
+
+        <main>
+            <div class="data-block data-tl">
+                <strong>СТАТУС ЗАПИСИ</strong><br>
+                Доступ ограничен<br>
+                AI: Ожидание<br>
+                <br>
+                [ТРЕБУЕТСЯ ВХОД]
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 48px;">
+                <button class="pill" style="width: 180px; height: 180px; border-radius: 50%; font-size: 1.2rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); opacity: 0.5; cursor: not-allowed;" disabled>
+                    ЗАБЛОКИРОВАНО
+                </button>
+            </div>
+
+            <div class="data-block data-tr">
+                <strong>СЕССИЯ</strong><br>
+                Длительность: --:--<br>
+                Качество: Высокое<br>
+                <br>
+                [СИНХРОНИЗАЦИЯ: ВЫКЛ]
+            </div>
+        </main>
+
+        <div class="grunge-map">
+            <div class="map-texture"></div>
+            <div class="footer-content" style="flex-direction: column; gap: 24px;">
+                <div style="width: 100%;">
+                    <strong style="display: block; margin-bottom: 12px; font-size: 1rem;">ИСТОРИЯ ЗАПИСЕЙ [ЗАЩИЩЕНО]</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card">
+            <button class="modal-close" id="modalClose">[X]</button>
+            <div class="modal-header">ВХОД В СИСТЕМУ</div>
+            <div class="modal-body">
+                <p>Для доступа к транскрипции приёмов и архиву пациентов подтвердите личность через защищённый канал.</p>
+                <br>
+                <p>Отправьте <strong>/auth</strong> боту <strong>@vetera_ai_bot</strong> в Telegram и введите полученный 8-значный код:</p>
+            </div>
+            <div class="auth-code-section">
+                <input type="text" id="authCodeInput" class="auth-code-input" placeholder="XXXXXXXX" maxlength="8" autocomplete="off">
+                <div id="authError" class="auth-error"></div>
+                <button class="tg-auth-btn interactive" id="authSubmitBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.13-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.85-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .33z"/>
+                    </svg>
+                    ВОЙТИ ЧЕРЕЗ TELEGRAM
+                </button>
+            </div>
+            <div class="modal-footer">
+                <span style="font-size: 0.7rem; opacity: 0.6;">Шифрование: AES-256</span>
+                <br>
+                <a href="/profile" style="font-size: 0.75rem; margin-top: 12px; display: inline-block;">Уже в системе? Перейти в кабинет</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let sessionId = localStorage.getItem('session_id') || 'web_' + Date.now();
+        localStorage.setItem('session_id', sessionId);
+
+        // Если уже авторизован — редирект в кабинет
+        fetch(`${API_URL}/api/user/me?session_id=${sessionId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    window.location.href = '/profile';
+                }
+            })
+            .catch(() => {});
+
+        // Three.js background
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xE6E2D6);
+        const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 12;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const vertexShader = `
+            varying vec2 vUv; varying vec3 vNormal;
+            void main() { vUv = uv; vNormal = normalize(normalMatrix * normal);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+        `;
+        const fragmentShader = `
+            uniform vec3 colorPaper; uniform vec3 colorRust; uniform vec3 colorForest; uniform float time;
+            varying vec2 vUv; varying vec3 vNormal;
+            float snoise(vec3 v) { return fract(sin(dot(v, vec3(12.9898, 78.233, 45.164))) * 43758.5453); }
+            void main() {
+                float noiseVal = snoise(vNormal + time * 0.1);
+                vec3 finalColor = mix(colorPaper, colorRust, step(0.5, noiseVal));
+                if(vNormal.x < -0.2) finalColor = colorForest;
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+        const uniforms = {
+            time: { value: 0 },
+            colorPaper: { value: new THREE.Color('#E6E2D6') },
+            colorRust: { value: new THREE.Color('#CC5A38') },
+            colorForest: { value: new THREE.Color('#2A5A43') }
+        };
+        const geometry = new THREE.IcosahedronGeometry(3.5, 30);
+        const material = new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+        function animate() {
+            requestAnimationFrame(animate);
+            material.uniforms.time.value += 0.005;
+            sphere.rotation.y += 0.002;
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function submitAuth() {
+            const code = document.getElementById('authCodeInput').value.trim().toUpperCase();
+            const errorDiv = document.getElementById('authError');
+            const btn = document.getElementById('authSubmitBtn');
+            if (!code || code.length !== 8) {
+                errorDiv.textContent = 'Введите 8-значный код';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            errorDiv.style.display = 'none';
+            btn.disabled = true;
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<span>Проверка...</span>';
+            fetch(`${API_URL}/api/telegram/auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, session_id: sessionId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    sessionId = data.session_id;
+                    localStorage.setItem('session_id', sessionId);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/profile';
+                } else {
+                    errorDiv.textContent = data.error || 'Неверный или истёкший код';
+                    errorDiv.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            })
+            .catch(() => {
+                errorDiv.textContent = 'Ошибка подключения';
+                errorDiv.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            });
+        }
+
+        document.getElementById('authSubmitBtn').addEventListener('click', submitAuth);
+        document.getElementById('authCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitAuth(); });
+        document.getElementById('modalClose').addEventListener('click', () => { window.location.href = '/'; });
+        document.getElementById('authModal').addEventListener('click', e => { if (e.target === document.getElementById('authModal')) window.location.href = '/'; });
+    </script>
+</body>
+</html>

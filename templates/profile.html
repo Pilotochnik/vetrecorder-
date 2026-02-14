@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>VetRecorder — Личный кабинет</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --paper: #E6E2D6;
+            --ink: #121212;
+            --rust: #C85228;
+            --terra-green: #2A5A42;
+            --sun-gold: #D4A044;
+            --pad-sm: 12px;
+            --pad-md: 24px;
+            --pad-lg: 48px;
+            --pad-xl: 96px;
+            --border-width: 1.5px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+        body {
+            background-color: var(--paper);
+            color: var(--ink);
+            font-family: 'Syne', sans-serif;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            pointer-events: none;
+        }
+
+        button, a, .interactive, input { pointer-events: auto; cursor: pointer; text-decoration: none; color: inherit; }
+
+        header {
+            padding: var(--pad-md) var(--pad-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+            font-family: 'Space Mono', monospace;
+            z-index: 20;
+        }
+
+        .brand-pill { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+        .status-dot { width: 8px; height: 8px; background-color: var(--terra-green); border-radius: 50%; }
+
+        .pill {
+            border: var(--border-width) solid var(--ink);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            background: var(--paper);
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+        .pill:hover { background: var(--ink); color: var(--paper); }
+        .pill.active { background: var(--ink); color: var(--paper); }
+
+        main {
+            padding: 0 var(--pad-lg);
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: var(--pad-lg);
+            flex: 1;
+            align-content: start;
+            min-height: 300px;
+        }
+
+        .profile-guest {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 24px;
+            text-align: center;
+            opacity: 0.7;
+        }
+        .profile-guest p { font-family: 'Space Mono', monospace; font-size: 1rem; }
+
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            padding-top: var(--pad-md);
+        }
+
+        .profile-card {
+            background: var(--paper);
+            border: var(--border-width) solid var(--ink);
+            padding: var(--pad-md);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .avatar-box {
+            width: 80px; height: 80px;
+            background: var(--rust);
+            border: var(--border-width) solid var(--ink);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Abril Fatface', serif;
+            font-size: 2rem;
+            color: var(--paper);
+            overflow: hidden;
+        }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .profile-info h2 { font-family: 'Abril Fatface', serif; font-size: 1.5rem; margin-bottom: 4px; }
+        .profile-info p { font-family: 'Space Mono', monospace; font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+        .stat-item { border: 1px solid rgba(18,18,18,0.2); padding: 12px; border-radius: 8px; }
+        .stat-val { display: block; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+        .stat-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; text-transform: uppercase; opacity: 0.6; }
+
+        .content-area { display: flex; flex-direction: column; gap: 32px; padding-top: var(--pad-md); }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: var(--border-width) solid var(--ink);
+            padding-bottom: 12px;
+        }
+        .section-header h3 { font-family: 'Abril Fatface', serif; font-size: 2.5rem; line-height: 1; }
+
+        .recordings-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+        .recordings-table th {
+            text-align: left;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            padding: 0 16px;
+            opacity: 0.5;
+        }
+
+        .recording-row {
+            background: rgba(255,255,255,0.3);
+            border: var(--border-width) solid var(--ink);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .recording-row:hover { background: var(--paper); transform: translateX(4px); }
+        .recording-row td {
+            padding: 20px 16px;
+            border-top: var(--border-width) solid var(--ink);
+            border-bottom: var(--border-width) solid var(--ink);
+        }
+        .recording-row td:first-child {
+            border-left: var(--border-width) solid var(--ink);
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+            font-weight: 800;
+        }
+        .recording-row td:last-child {
+            border-right: var(--border-width) solid var(--ink);
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+            text-align: right;
+        }
+
+        .tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            background: var(--terra-green);
+            color: var(--paper);
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .grunge-map {
+            width: 100%;
+            height: 120px;
+            min-height: 100px;
+            background-color: var(--rust);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 0 var(--pad-lg);
+            border-top: var(--border-width) solid var(--ink);
+        }
+        .map-texture {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--terra-green);
+            clip-path: polygon(0% 20%, 20% 40%, 40% 10%, 60% 50%, 80% 20%, 100% 60%, 100% 100%, 0% 100%);
+            opacity: 0.6;
+        }
+        .footer-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            color: var(--paper);
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+        }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a { color: var(--ink); font-family: 'Space Mono', monospace; font-weight: 700; }
+        .nav-links a:hover { color: var(--rust); }
+
+        /* Auth modal (popup when not logged in) */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .auth-modal.active { display: flex; pointer-events: auto; }
+        .auth-card {
+            background: var(--paper);
+            border: var(--border-width) solid var(--ink);
+            padding: 48px;
+            border-radius: 16px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .auth-card-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--ink);
+            opacity: 0.6;
+        }
+        .auth-card-close:hover { opacity: 1; }
+        .auth-card h2 { font-family: 'Abril Fatface', serif; font-size: 2rem; margin-bottom: 8px; }
+        .auth-card p { font-family: 'Space Mono', monospace; font-size: 0.8rem; opacity: 0.8; margin-bottom: 24px; }
+        .auth-input {
+            width: 100%;
+            padding: 14px 20px;
+            border: var(--border-width) solid var(--ink);
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            background: var(--paper);
+        }
+        .auth-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--rust);
+            color: var(--paper);
+            border: var(--border-width) solid var(--ink);
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .auth-submit:hover { background: var(--ink); }
+        .auth-error { color: var(--rust); font-size: 0.75rem; margin-top: 12px; display: none; }
+
+        .result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-modal.active { display: flex; }
+        .result-modal .content {
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            max-width: 1200px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 48px;
+            border-radius: 16px;
+        }
+        .result-modal .content strong {
+            font-size: 1.4rem;
+            letter-spacing: 0.03em;
+        }
+        .result-modal pre {
+            white-space: pre-wrap;
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            line-height: 1.85;
+            letter-spacing: 0.02em;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+            .profile-sidebar { order: 2; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer">
+        <header>
+            <a href="/" class="brand-pill interactive">
+                <div class="status-dot"></div>
+                <span>VET RECORDER / АККАУНТ</span>
+            </a>
+            <div class="brand-pill">
+                <a href="/app" class="pill interactive">Новая сессия +</a>
+            </div>
+        </header>
+
+        <main>
+            <!-- Guest placeholder: shown when not logged in (auth modal overlays) -->
+            <div id="profileGuest" class="profile-guest" style="display: none;">
+                <p>Войдите в аккаунт для доступа к профилю и истории записей.</p>
+            </div>
+
+            <!-- Dashboard: shown when logged in -->
+            <div id="dashboardView" style="display: none; grid-column: 1 / -1; grid-template-columns: 320px 1fr; gap: var(--pad-lg); align-content: start;">
+                <aside class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="avatar-box" id="avatarBox">?</div>
+                        <div class="profile-info">
+                            <h2 id="userName">Загрузка...</h2>
+                            <p id="userInfo">ID: —</p>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-val" id="statRecordings">0</span>
+                                <span class="stat-label">Записей</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-val" id="statSync">✓</span>
+                                <span class="stat-label">Синхронизировано</span>
+                            </div>
+                        </div>
+                        <a href="/app" class="pill interactive" style="display: block; text-align: center; margin-top: 24px;">Новая запись</a>
+                    </div>
+                    <div class="profile-card" style="background: var(--ink); color: var(--paper);">
+                        <span class="stat-label" style="color: var(--paper); opacity: 0.5;">Статус</span>
+                        <div style="height: 4px; background: rgba(255,255,255,0.2); margin: 12px 0; border-radius: 2px;">
+                            <div style="width: 100%; height: 100%; background: var(--terra-green); border-radius: 2px;" id="statusBar"></div>
+                        </div>
+                        <span class="stat-label" style="color: var(--paper);" id="statusText">Готово к работе</span>
+                    </div>
+                </aside>
+
+                <section class="content-area">
+                    <div class="section-header">
+                        <h3>Последние записи</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="pill active interactive">Все</button>
+                        </div>
+                    </div>
+                    <table class="recordings-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Описание</th>
+                                <th>Дата / Время</th>
+                                <th>Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordingsBody">
+                            <tr><td colspan="4" style="padding: 24px; opacity: 0.6;">Загрузка...</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+
+        <div class="grunge-map">
+            <div class="map-texture"></div>
+            <div class="footer-content">
+                <div>
+                    <strong>Статус: в норме</strong>
+                    <span style="margin-left: 24px; opacity: 0.7;">© VetRecorder AI</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth modal popup -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-card">
+            <button class="auth-card-close" id="authModalClose" aria-label="Закрыть">✕</button>
+            <h2>Вход через Telegram</h2>
+            <p>Отправьте <strong>/auth</strong> боту <strong>@vetera_ai_bot</strong>, затем введите полученный код.</p>
+            <input type="text" id="authCodeInput" class="auth-input" placeholder="ВВЕДИТЕ 8-ЗНАЧНЫЙ КОД" maxlength="8" autocomplete="off">
+            <button class="auth-submit" id="authSubmitBtn">Войти</button>
+            <div id="authError" class="auth-error"></div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="result-modal">
+        <div class="content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <strong>Результат анализа</strong>
+                <button class="pill" onclick="closeResultModal()">✕</button>
+            </div>
+            <pre id="resultModalBody"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let sessionId = localStorage.getItem('session_id') || 'web_' + Date.now();
+        localStorage.setItem('session_id', sessionId);
+
+        // Three.js background
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xE6E2D6);
+        const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 12;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const vertexShader = `
+            varying vec2 vUv; varying vec3 vNormal;
+            void main() { vUv = uv; vNormal = normalize(normalMatrix * normal);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+        `;
+        const fragmentShader = `
+            uniform float time; varying vec2 vUv; varying vec3 vNormal;
+            void main() {
+                float intensity = pow(0.7 - dot(vNormal, vec3(0, 0, 1.0)), 2.0);
+                vec3 baseColor = vec3(0.78, 0.32, 0.15);
+                vec3 accentColor = vec3(0.16, 0.35, 0.26);
+                vec3 finalColor = mix(baseColor, accentColor, sin(time * 0.2 + vUv.y * 10.0) * 0.5 + 0.5);
+                gl_FragColor = vec4(finalColor, intensity * 0.3);
+            }
+        `;
+        const geometry = new THREE.IcosahedronGeometry(8, 2);
+        const material = new THREE.ShaderMaterial({
+            vertexShader, fragmentShader,
+            uniforms: { time: { value: 0 } },
+            transparent: true, wireframe: true
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        function animate(t) {
+            requestAnimationFrame(animate);
+            material.uniforms.time.value = t * 0.001;
+            mesh.rotation.y += 0.001;
+            mesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate(0);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Auth & Dashboard logic
+        async function checkAuth() {
+            try {
+                const r = await fetch(`${API_URL}/api/user/me?session_id=${sessionId}`);
+                const data = await r.json();
+                if (data.success && data.user) {
+                    showDashboard(data.user);
+                    loadHistory();
+                } else {
+                    showAuthForm();
+                }
+            } catch {
+                showAuthForm();
+            }
+        }
+
+        function showAuthForm() {
+            document.getElementById('profileGuest').style.display = 'flex';
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function showDashboard(user) {
+            const dv = document.getElementById('dashboardView');
+            document.getElementById('profileGuest').style.display = 'none';
+            document.getElementById('authModal').classList.remove('active');
+            dv.style.display = 'grid';
+
+            const name = user.first_name || user.username || 'Пользователь';
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userInfo').textContent = `ID: ${user.telegram_id || user.id || '—'}`;
+
+            const avatarBox = document.getElementById('avatarBox');
+            if (user.photo_url) {
+                avatarBox.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = user.photo_url;
+                img.alt = name;
+                avatarBox.appendChild(img);
+            } else {
+                avatarBox.textContent = (name[0] || '?').toUpperCase();
+            }
+        }
+
+        function submitAuth() {
+            const code = document.getElementById('authCodeInput').value.trim().toUpperCase();
+            const errorDiv = document.getElementById('authError');
+            const btn = document.getElementById('authSubmitBtn');
+            if (!code || code.length !== 8) {
+                errorDiv.textContent = 'Введите 8-значный код';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            errorDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
+            fetch(`${API_URL}/api/telegram/auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, session_id: sessionId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    sessionId = data.session_id;
+                    localStorage.setItem('session_id', sessionId);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    closeAuthModal();
+                    showDashboard(data.user);
+                    loadHistory();
+                } else {
+                    errorDiv.textContent = data.error || 'Ошибка авторизации';
+                    errorDiv.style.display = 'block';
+                }
+                btn.disabled = false;
+                btn.textContent = 'Войти';
+            })
+            .catch(() => {
+                errorDiv.textContent = 'Ошибка подключения';
+                errorDiv.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Войти';
+            });
+        }
+
+        async function loadHistory() {
+            const tbody = document.getElementById('recordingsBody');
+            try {
+                const r = await fetch(`${API_URL}/api/history?session_id=${sessionId}`);
+                const data = await r.json();
+                document.getElementById('statRecordings').textContent = data.history?.length || 0;
+                if (data.success && data.history && data.history.length > 0) {
+                    const sorted = [...data.history].sort((a,b) => {
+                        const parse = s => {
+                            const [d,t] = (s||'').split(' ');
+                            const [day,month,year] = (d||'').split('.');
+                            return new Date(`${year}-${month}-${day} ${t||'00:00'}`);
+                        };
+                        return parse(b.created_at) - parse(a.created_at);
+                    });
+                    tbody.innerHTML = sorted.slice(0, 15).map(item => `
+                        <tr class="recording-row interactive" onclick="viewIntake(${item.id})">
+                            <td>#${String(item.id).padStart(3,'0')}</td>
+                            <td>${(item.preview || '').substring(0, 80)}${(item.preview || '').length > 80 ? '…' : ''}</td>
+                            <td>${item.created_at}</td>
+                            <td><span style="font-weight: 700;">Просмотр →</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 24px; opacity: 0.6;">Записей пока нет</td></tr>';
+                }
+            } catch {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 24px; color: var(--rust);">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        async function viewIntake(id) {
+            try {
+                const r = await fetch(`${API_URL}/api/intake/${id}`);
+                const data = await r.json();
+                if (data.success) {
+                    document.getElementById('resultModalBody').textContent = data.intake.result_text;
+                    document.getElementById('resultModal').classList.add('active');
+                }
+            } catch { alert('Ошибка загрузки'); }
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        document.getElementById('authSubmitBtn').addEventListener('click', submitAuth);
+        document.getElementById('authCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitAuth(); });
+        document.getElementById('authModalClose').addEventListener('click', closeAuthModal);
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAuthModal();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeResultModal();
+                if (document.getElementById('authModal').classList.contains('active')) closeAuthModal();
+            }
+        });
+
+        window.viewIntake = viewIntake;
+        window.closeResultModal = closeResultModal;
+
+        checkAuth();
+    </script>
+</body>
+</html>

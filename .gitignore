@@ -1,6 +1,53 @@
+# Переменные и секреты
 .env
+.env.local
+.env.*.local
+*.env
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.eggs/
+*.egg-info/
+*.egg
+
+# Логи и временные файлы
+*.log
 bot.log
+app.log
+*.tmp
+*.temp
+
+# Результаты записей (генерируются при работе)
 output_*.txt
 output_*.docx
+
+# Загруженные файлы
+uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Тестовые и отладочные БД
+*.db
+*.sqlite3
+
+# Бэкапы
+backups/
+*.backup
+
+# Служебные git-папки
+vetgod.git/
