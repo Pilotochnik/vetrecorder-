@@ -335,26 +335,104 @@
             .result-modal pre { font-size: 16px; }
         }
 
+        .fab-history {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--rust);
+            color: var(--paper);
+            border: 2px solid var(--ink);
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-align: center;
+            z-index: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .fab-history:hover { background: var(--ink); transform: scale(1.05); }
+        .fab-history:active { transform: scale(0.98); }
+
+        .history-sheet {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            max-height: 75vh;
+            background: var(--paper);
+            border-top: 2px solid var(--ink);
+            border-radius: 20px 20px 0 0;
+            z-index: 600;
+            overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+        }
+        .history-sheet.open { transform: translateY(0); display: block; }
+        .history-sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: var(--border-width) solid var(--ink);
+            background: var(--rust);
+            color: var(--paper);
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .history-sheet-close {
+            background: none;
+            border: none;
+            color: var(--paper);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .history-sheet-body {
+            max-height: calc(75vh - 56px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+        .history-sheet-body .history-grid { grid-template-columns: 1fr; gap: 12px; }
+        .history-sheet-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 550;
+            pointer-events: none;
+        }
+        .history-sheet-overlay.visible { display: block; pointer-events: auto; }
+
         @media (max-width: 768px) {
-            body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+            body { padding: env(safe-area-inset-bottom, 0) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+            .ui-layer { grid-template-rows: auto 1fr; }
             header { padding: var(--pad-sm); flex-wrap: wrap; gap: 12px; align-items: center; }
             .data-block { display: none; }
-            #recordBtn { width: 160px; height: 160px; font-size: 1rem; }
-            .hero-title-wrapper > div { gap: 32px; }
+            main { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; padding: 20px; }
+            #recordBtn { width: 180px; height: 180px; font-size: 1.15rem; }
+            .hero-title-wrapper { width: 100%; }
+            .hero-title-wrapper > div { gap: 24px; align-items: center; }
             #resultBox { padding: 20px 16px; max-width: 100%; }
-            .grunge-map { min-height: 56px; height: auto; padding: 0; align-items: stretch; }
-            .footer-content { flex-direction: column; gap: 12px; align-items: stretch; padding: 12px 16px; }
-            .history-mobile-row { display: flex; }
-            .history-toggle-btn { display: flex; }
-            .history-section-wrap.collapsed { max-height: 0 !important; min-height: 0 !important; overflow: hidden !important; }
-            .history-mobile-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; flex-wrap: wrap; }
-            .history-section-wrap:not(.collapsed) { max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-            .history-section-wrap .history-grid { max-height: none; }
-            .history-grid { grid-template-columns: 1fr; gap: 10px; padding: 0; }
-            .history-card { padding: 14px; min-height: auto; }
-            .history-header-row { display: none !important; }
+            .grunge-map { display: none !important; }
+            .history-mobile-row, .history-toggle-btn, .history-header-row { display: none !important; }
+            .footer-content { display: none; }
+            .history-section-wrap { display: none; }
+            .fab-history { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; }
+            .fab-history span { font-size: 0.6rem; line-height: 1; }
             .result-modal .content { width: 100%; max-width: none; margin: 16px; padding: 32px 24px; max-height: calc(100vh - 32px); }
             .result-modal pre { font-size: 15px; line-height: 1.7; }
+        }
+
+        @media (min-width: 769px) {
+            .fab-history, .history-sheet, .history-sheet-overlay { display: none !important; }
         }
 
         @media (max-width: 600px) {
@@ -467,6 +545,28 @@
                 </div>
             </div>
         </div>
+
+        <button class="fab-history interactive" id="fabHistory" onclick="openHistorySheet()" aria-label="История записей">
+            <span>История</span>
+            <span id="fabHistoryCount">(0)</span>
+        </button>
+
+        <div class="history-sheet-overlay" id="historySheetOverlay" onclick="closeHistorySheet()"></div>
+        <div class="history-sheet" id="historySheet">
+            <div class="history-sheet-header">
+                <span>История записей <span id="historySheetCount">(0)</span></span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="pill" onclick="startNewIntake(); closeHistorySheet();" style="background: rgba(255,255,255,0.2); border-color: var(--paper); color: var(--paper); padding: 6px 12px; font-size: 0.75rem;">+ Новый приём</button>
+                    <button class="history-sheet-close" onclick="closeHistorySheet()">✕</button>
+                </div>
+            </div>
+            <div class="history-sheet-body">
+                <div id="mobileHistoryGrid" class="history-grid">
+                    <div style="opacity: 0.8;">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="processingOverlay" class="processing-overlay">
         <div>Обработка аудио...</div>
@@ -851,6 +951,17 @@
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeResultModal(); });
 
+        function openHistorySheet() {
+            document.getElementById('historySheet').classList.add('open');
+            document.getElementById('historySheetOverlay').classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeHistorySheet() {
+            document.getElementById('historySheet').classList.remove('open');
+            document.getElementById('historySheetOverlay').classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
         function toggleHistoryMobile() {
             const wrap = document.getElementById('historySectionWrap');
             const section = document.querySelector('.history-section');
@@ -872,7 +983,10 @@
 
         async function loadHistory() {
             const grid = document.getElementById('historyGrid');
+            const mobileGrid = document.getElementById('mobileHistoryGrid');
             const countEl = document.getElementById('historyCount');
+            const fabCount = document.getElementById('fabHistoryCount');
+            const sheetCount = document.getElementById('historySheetCount');
             try {
                 const r = await fetch(`${API_URL}/api/history?session_id=${currentSessionId}`);
                 const data = await r.json();
@@ -885,21 +999,34 @@
                         };
                         return parse(b.created_at) - parse(a.created_at);
                     });
-                    if (countEl) countEl.textContent = '(' + sorted.length + ')';
-                    grid.innerHTML = sorted.slice(0, 9).map(item => `
+                    var countStr = '(' + sorted.length + ')';
+                    var html = sorted.slice(0, 9).map(item => `
                         <div class="history-card" onclick="loadIntake(${item.id});event.stopPropagation()">
                             <strong>Session #${item.id}</strong>
                             <div class="meta">Date: ${item.created_at}</div>
                             <div class="meta">${(item.preview || '').substring(0, 50)}</div>
                         </div>
                     `).join('');
+                    if (countEl) countEl.textContent = countStr;
+                    if (fabCount) fabCount.textContent = countStr;
+                    if (sheetCount) sheetCount.textContent = countStr;
+                    grid.innerHTML = html;
+                    if (mobileGrid) mobileGrid.innerHTML = html;
                 } else {
+                    var empty = '<div style="opacity: 0.8;">История пуста</div>';
                     if (countEl) countEl.textContent = '(0)';
-                    grid.innerHTML = '<div style="opacity: 0.8;">История пуста</div>';
+                    if (fabCount) fabCount.textContent = '(0)';
+                    if (sheetCount) sheetCount.textContent = '(0)';
+                    grid.innerHTML = empty;
+                    if (mobileGrid) mobileGrid.innerHTML = empty;
                 }
             } catch {
+                var err = '<div style="opacity: 0.8;">Ошибка загрузки</div>';
                 if (countEl) countEl.textContent = '(0)';
-                grid.innerHTML = '<div style="opacity: 0.8;">Ошибка загрузки</div>';
+                if (fabCount) fabCount.textContent = '(0)';
+                if (sheetCount) sheetCount.textContent = '(0)';
+                grid.innerHTML = err;
+                if (mobileGrid) mobileGrid.innerHTML = err;
             }
         }
 
@@ -914,6 +1041,8 @@
                     currentFiles.docx = data.intake.docx_path;
                     resultText.textContent = data.intake.result_text;
                     resultBox.classList.add('show');
+                    showResultModal(data.intake.result_text);
+                    if (window.innerWidth <= 768) closeHistorySheet();
                 }
             } catch { alert('Ошибка загрузки'); }
         }
