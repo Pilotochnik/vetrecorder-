@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -98,6 +98,14 @@
             flex: 1;
             align-content: start;
             min-height: 300px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: 320px 1fr;
+            gap: var(--pad-lg);
+            align-content: start;
         }
 
         .profile-guest {
@@ -339,9 +347,79 @@
             font-weight: 500;
         }
 
+        /* Responsive */
+        @media (max-width: 1200px) {
+            main { gap: var(--pad-md); }
+            .recordings-table { font-size: 0.9rem; }
+        }
+
         @media (max-width: 900px) {
-            main { grid-template-columns: 1fr; }
-            .profile-sidebar { order: 2; }
+            main { grid-template-columns: 1fr; padding: 0 var(--pad-md); }
+            .profile-sidebar { order: 2; flex-direction: row; flex-wrap: wrap; gap: 20px; }
+            .profile-sidebar .profile-card:first-child { flex: 1; min-width: 260px; }
+            .section-header h3 { font-size: 1.8rem; }
+            .content-area { overflow-x: auto; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+            header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            main { padding: 12px 16px 20px; grid-template-columns: 1fr; gap: 16px; min-height: auto; overflow-x: hidden; }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 16px; }
+            .profile-sidebar { flex-direction: row; flex-wrap: wrap; gap: 12px; padding-top: 0; order: 1; }
+            .profile-sidebar .profile-card { flex: 1 1 100%; min-width: 0; padding: 16px; }
+            .profile-sidebar .profile-card:first-child { display: flex; flex-direction: row; gap: 16px; align-items: center; }
+            .profile-sidebar .profile-card:first-child .avatar-box { width: 56px; height: 56px; min-width: 56px; margin-bottom: 0; font-size: 1.4rem; }
+            .profile-sidebar .profile-card:first-child .profile-info { flex: 1; min-width: 0; }
+            .profile-sidebar .profile-card:first-child .profile-info h2 { font-size: 1.1rem; }
+            .profile-sidebar .profile-card:first-child .profile-info p { font-size: 0.65rem; }
+            .profile-sidebar .profile-card:first-child .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; flex: 1 1 100%; }
+            .profile-sidebar .profile-card:first-child .stat-item { padding: 8px; }
+            .profile-sidebar .profile-card:first-child .stat-val { font-size: 1rem; }
+            .profile-sidebar .profile-card:first-child a.pill { margin-top: 12px; }
+            .profile-sidebar .profile-card:last-child { flex: 1 1 100%; padding: 12px; }
+            .profile-sidebar .profile-card:last-child .stat-label { font-size: 0.55rem; }
+            .content-area { padding-top: 0; }
+            .section-header { flex-wrap: wrap; gap: 8px; padding-bottom: 10px; }
+            .section-header h3 { font-size: 1.4rem; }
+            .recordings-table { display: block; }
+            .recordings-table thead { display: none; }
+            .recordings-table tbody { display: block; }
+            .recordings-table tr { display: block; margin-bottom: 10px; }
+            .recordings-table td { display: block; border: none !important; padding: 14px 16px !important; border-radius: 0 !important; }
+            .recording-row { border-radius: 12px; overflow: hidden; border: var(--border-width) solid var(--ink); background: rgba(255,255,255,0.5); }
+            .recording-row td:first-child { font-size: 0.85rem; font-weight: 800; padding-bottom: 4px !important; }
+            .recording-row td:nth-child(2) { font-size: 0.85rem; line-height: 1.4; padding-top: 0 !important; padding-bottom: 8px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+            .recording-row td:nth-child(3) { font-size: 0.7rem; opacity: 0.7; padding: 0 16px 8px !important; }
+            .recording-row td:nth-child(3)::before { content: ""; }
+            .recording-row td:last-child { text-align: left; padding-top: 4px !important; padding-bottom: 14px !important; font-size: 0.8rem; }
+            .grunge-map { min-height: 60px; height: auto; padding: 12px 16px; }
+            .result-modal .content, .auth-card { width: calc(100% - 24px); max-width: none; margin: 12px; padding: 24px 20px; max-height: calc(100vh - 24px); }
+            .result-modal pre { font-size: 14px; line-height: 1.65; }
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 10px 12px; }
+            .brand-pill span { font-size: 0.6rem; }
+            .pill { min-height: 44px; padding: 10px 16px; font-size: 0.75rem; }
+            main { padding: 10px 12px 16px; }
+            .profile-sidebar .profile-card:first-child .avatar-box { width: 48px; height: 48px; min-width: 48px; font-size: 1.2rem; }
+            .profile-sidebar .profile-card:first-child .profile-info h2 { font-size: 1rem; }
+            .profile-sidebar .profile-card:first-child .stats-grid { grid-template-columns: 1fr 1fr; }
+            .profile-info h2 { font-size: 1rem; }
+            .section-header h3 { font-size: 1.25rem; }
+            .recording-row td { padding: 12px 14px !important; }
+        }
+
+        @media (max-width: 400px) {
+            .profile-sidebar .profile-card:first-child { flex-direction: column; align-items: flex-start; }
+            .profile-sidebar .profile-card:first-child .avatar-box { margin-bottom: 8px; }
+        }
+
+        @media (hover: none) {
+            .pill { min-height: 44px; }
+            .recording-row { min-height: 72px; -webkit-tap-highlight-color: transparent; }
+            .auth-submit { min-height: 48px; }
         }
     </style>
 </head>
@@ -366,7 +444,7 @@
             </div>
 
             <!-- Dashboard: shown when logged in -->
-            <div id="dashboardView" style="display: none; grid-column: 1 / -1; grid-template-columns: 320px 1fr; gap: var(--pad-lg); align-content: start;">
+            <div id="dashboardView" class="dashboard-grid" style="display: none;">
                 <aside class="profile-sidebar">
                     <div class="profile-card">
                         <div class="avatar-box" id="avatarBox">?</div>

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -249,12 +249,45 @@
 
         .tg-icon { width: 20px; height: 20px; fill: currentColor; }
 
+        /* Touch-friendly */
+        @media (hover: none) {
+            .pill { min-height: 48px; min-width: 48px; padding: 14px 28px; }
+            .pill.primary, .pill.telegram { padding: 14px 28px; }
+        }
+
+        @media (max-width: 1200px) {
+            main { padding: 0 var(--pad-md); }
+            .hero-card { padding: 36px 40px; }
+        }
+
         @media (max-width: 900px) {
-            main { grid-template-columns: 1fr; padding-bottom: 420px; }
-            .features-grid { position: relative; right: auto; top: auto; transform: none; max-width: 100%; gap: 20px; }
+            main { grid-template-columns: 1fr; padding: 0 var(--pad-md) 32px; padding-bottom: 420px; align-items: flex-start; }
+            .hero-content { max-width: 100%; }
+            .hero-card { padding: 32px 28px; max-width: 100%; }
+            .hero-subtext { font-size: 1rem; margin-bottom: var(--pad-md); }
+            .cta-group { flex-direction: column; width: 100%; gap: 12px; }
+            .cta-group .pill { width: 100%; justify-content: center; min-height: 48px; }
+            .features-grid { position: relative; right: auto; top: auto; transform: none; max-width: 100%; gap: 20px; margin-top: 24px; }
             .feature-card { padding: 24px; }
             .feature-card h3 { font-size: 0.95rem; }
             .feature-card p { font-size: 0.9rem; }
+            .grunge-footer { height: 180px; padding: var(--pad-md); }
+            .footer-nav { flex-direction: column; gap: 12px; text-align: center; }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+            header { padding: var(--pad-sm) var(--pad-md); flex-wrap: wrap; gap: 8px; }
+            .brand-pill span { font-size: 0.65rem; }
+            main { padding-bottom: 380px; }
+            .hero-card { padding: 24px 20px; }
+            h1 { font-size: clamp(2.5rem, 10vw, 4rem); }
+            .data-label { display: none; }
+            .grunge-footer { height: 160px; min-height: 140px; }
+        }
+
+        @media (max-width: 400px) {
+            .cta-group .pill { font-size: 0.8rem; padding: 12px 20px; }
         }
     </style>
 </head>

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>VetRecorder - AI Transcription</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -117,7 +117,7 @@
             position: relative;
             padding: var(--pad-md);
         }
-
+        
         .data-block {
             position: absolute;
             font-family: 'Space Mono', monospace;
@@ -179,7 +179,6 @@
 
         .grunge-map {
             width: 100%;
-            height: 25vh;
             min-height: 180px;
             background-color: var(--rust);
             position: relative;
@@ -221,6 +220,42 @@
             font-family: 'Space Mono', monospace;
             text-transform: uppercase;
             font-size: 0.8rem;
+        }
+
+        .history-toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .history-mobile-row { display: none; }
+
+        .history-toggle-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid var(--paper);
+            color: var(--paper);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-toggle-btn:hover { background: rgba(255,255,255,0.3); }
+        .history-toggle-btn .chevron { transition: transform 0.2s; }
+        .history-section.expanded .history-toggle-btn .chevron { transform: rotate(180deg); }
+
+        .history-section-wrap {
+            width: 100%;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
         }
 
         .history-grid {
@@ -294,9 +329,50 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .result-modal .content { max-width: 95%; padding: 40px 32px; }
+            .result-modal pre { font-size: 16px; }
+        }
+
         @media (max-width: 768px) {
+            body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+            header { padding: var(--pad-sm); flex-wrap: wrap; gap: 12px; align-items: center; }
             .data-block { display: none; }
-            .grunge-map { height: 15vh; min-height: 140px; }
+            #recordBtn { width: 160px; height: 160px; font-size: 1rem; }
+            .hero-title-wrapper > div { gap: 32px; }
+            #resultBox { padding: 20px 16px; max-width: 100%; }
+            .grunge-map { min-height: 56px; height: auto; padding: 0; align-items: stretch; }
+            .footer-content { flex-direction: column; gap: 12px; align-items: stretch; padding: 12px 16px; }
+            .history-mobile-row { display: flex; }
+            .history-toggle-btn { display: flex; }
+            .history-section-wrap.collapsed { max-height: 0 !important; min-height: 0 !important; overflow: hidden !important; }
+            .history-mobile-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; flex-wrap: wrap; }
+            .history-section-wrap:not(.collapsed) { max-height: 42vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+            .history-section-wrap .history-grid { max-height: none; }
+            .history-grid { grid-template-columns: 1fr; gap: 10px; padding: 0; }
+            .history-card { padding: 14px; min-height: auto; }
+            .history-header-row { display: none !important; }
+            .result-modal .content { width: 100%; max-width: none; margin: 16px; padding: 32px 24px; max-height: calc(100vh - 32px); }
+            .result-modal pre { font-size: 15px; line-height: 1.7; }
+        }
+
+        @media (max-width: 600px) {
+            .brand-pill span { font-size: 0.65rem; }
+            #recordBtn { width: 140px; height: 140px; min-width: 140px; min-height: 140px; font-size: 0.95rem; }
+            .pill { min-height: 44px; padding: 10px 18px; }
+            .auth-panel { min-width: 100%; right: 0; left: 0; }
+            .history-card { padding: 20px; min-height: 80px; }
+        }
+
+        @media (max-width: 400px) {
+            #recordBtn { width: 130px; height: 130px; min-width: 130px; min-height: 130px; }
+            .footer-content button.pill { width: 100%; }
+        }
+
+        @media (hover: none) {
+            #recordBtn { min-width: 160px; min-height: 160px; }
+            .pill { min-height: 44px; }
         }
     </style>
 </head>
@@ -305,7 +381,7 @@
         <filter id="noise">
             <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"></feTurbulence>
         </filter>
-    </svg>
+            </svg>
 
     <div id="canvas-container"></div>
 
@@ -324,7 +400,7 @@
                         <input type="text" id="authCodeInput" class="auth-input" placeholder="ВВЕДИТЕ КОД" maxlength="8" autocomplete="off">
                         <button class="auth-submit" id="authSubmitBtn">Войти</button>
                         <div id="authError" class="auth-error"></div>
-                    </div>
+                </div>
                     <div id="userInfo" class="user-info-btn" style="display: none;" onclick="window.location.href='/profile'">
                         <img id="userPhoto" src="" alt="">
                         <span id="userName"></span>
@@ -340,7 +416,7 @@
                 AI Analysis: Active<br>
                 <br>
                 [MICROPHONE READY]
-            </div>
+                </div>
 
             <div class="hero-title-wrapper">
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 48px;">
@@ -352,8 +428,8 @@
                     <div id="resultBox">
                         <strong>Latest Recording Result:</strong>
                         <p id="resultText">Your transcription and analysis will appear here after recording stops...</p>
-                    </div>
                 </div>
+            </div>
             </div>
 
             <div class="data-block data-tr">
@@ -365,23 +441,32 @@
             </div>
         </main>
 
-        <div class="grunge-map">
+        <div class="grunge-map history-section">
             <div class="map-texture"></div>
             <div class="map-texture-2"></div>
             <div class="footer-content">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div class="history-header-row" style="width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <strong style="display: block; margin-bottom: 0; font-size: 1rem;">RECORDING HISTORY</strong>
                         <span id="demoBadge" style="display: none; background: var(--sun-gold); color: var(--ink); padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">ДЕМО — 4 тестовых записи</span>
                     </div>
                     <button class="pill" onclick="startNewIntake(); event.stopPropagation()" style="background: rgba(255,255,255,0.2); border-color: var(--paper); color: var(--paper); padding: 6px 14px; font-size: 0.8rem;">+ Новый приём</button>
                 </div>
-                <div id="historyGrid" class="history-grid">
-                    <div style="opacity: 0.8;">Загрузка...</div>
+                <div class="history-mobile-row">
+                    <button class="history-toggle-btn interactive" id="historyToggleBtn" onclick="toggleHistoryMobile()" aria-label="Показать историю">
+                        <span id="historyToggleLabel">История</span>
+                        <span id="historyCount">(0)</span>
+                        <span class="chevron">▼</span>
+                    </button>
+                    <button class="pill history-new-btn interactive" onclick="startNewIntake(); event.stopPropagation()" style="background: rgba(255,255,255,0.2); border-color: var(--paper); color: var(--paper); padding: 8px 14px; font-size: 0.8rem;">+ Новый приём</button>
+                </div>
+                <div class="history-section-wrap collapsed" id="historySectionWrap">
+                    <div id="historyGrid" class="history-grid">
+                        <div style="opacity: 0.8;">Загрузка...</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
     <div id="processingOverlay" class="processing-overlay">
         <div>Обработка аудио...</div>
@@ -393,7 +478,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <strong>Результат анализа</strong>
                 <button class="pill" onclick="closeResultModal()">✕</button>
-            </div>
+    </div>
             <pre id="resultModalBody"></pre>
         </div>
     </div>
@@ -406,7 +491,7 @@
 
         let currentSessionId = isDemoMode ? 'demo' : (localStorage.getItem('session_id') || 'web_' + Date.now());
         if (!isDemoMode) localStorage.setItem('session_id', currentSessionId);
-
+        
         let currentFiles = { txt: null, docx: null };
         let mediaRecorder = null;
         let audioChunks = [];
@@ -414,7 +499,7 @@
         let recordingTimer = null;
         let recordingSeconds = 0;
         let currentStructuredText = '';
-
+        
         // Three.js Shader sphere
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -651,7 +736,7 @@
             e.stopPropagation();
             if (isRecording) {
                 mediaRecorder.stop();
-                return;
+                    return;
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -662,7 +747,7 @@
                 btnText.innerHTML = 'ОСТАНОВИТЬ';
                 recordingStatus.textContent = 'Recording...';
                 resultBox.classList.remove('show');
-
+                
                 recordingTimer = setInterval(() => {
                     recordingSeconds++;
                     const m = Math.floor(recordingSeconds / 60);
@@ -675,7 +760,7 @@
                     stream.getTracks().forEach(t => t.stop());
                     clearInterval(recordingTimer);
                     isRecording = false;
-                    recordBtn.classList.remove('recording');
+                recordBtn.classList.remove('recording');
                     btnText.innerHTML = 'НАЧАТЬ<br>ЗАПИСЬ';
                     recordingStatus.textContent = 'Processing...';
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -711,9 +796,9 @@
             const iv = setInterval(() => { statusEl.textContent = frames[fi++ % frames.length]; }, 200);
 
             try {
-                const formData = new FormData();
-                formData.append('audio', audioFile);
-                formData.append('session_id', currentSessionId);
+            const formData = new FormData();
+            formData.append('audio', audioFile);
+            formData.append('session_id', currentSessionId);
                 formData.append('transcript', '');
 
                 const r = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: formData });
@@ -729,7 +814,7 @@
                 if (!data.success || !data.structured_text) {
                     throw new Error('Пустой ответ от сервера');
                 }
-
+                
                 currentFiles.txt = data.txt_path;
                 currentFiles.docx = data.docx_path;
                 currentStructuredText = data.structured_text;
@@ -744,7 +829,7 @@
                 recordingStatus.textContent = 'Ready to record';
                 sessionDuration.textContent = 'Duration: 00:00';
 
-                showResultModal(data.structured_text);
+                    showResultModal(data.structured_text);
                 setTimeout(loadHistory, 300);
             } catch (err) {
                 clearInterval(iv);
@@ -766,8 +851,28 @@
 
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeResultModal(); });
 
+        function toggleHistoryMobile() {
+            const wrap = document.getElementById('historySectionWrap');
+            const section = document.querySelector('.history-section');
+            if (wrap && section) {
+                wrap.classList.toggle('collapsed');
+                section.classList.toggle('expanded', !wrap.classList.contains('collapsed'));
+            }
+        }
+
+        function initHistoryMobile() {
+            const wrap = document.getElementById('historySectionWrap');
+            if (!wrap) return;
+            if (window.innerWidth <= 768) {
+                wrap.classList.add('collapsed');
+            } else {
+                wrap.classList.remove('collapsed');
+            }
+        }
+
         async function loadHistory() {
             const grid = document.getElementById('historyGrid');
+            const countEl = document.getElementById('historyCount');
             try {
                 const r = await fetch(`${API_URL}/api/history?session_id=${currentSessionId}`);
                 const data = await r.json();
@@ -780,6 +885,7 @@
                         };
                         return parse(b.created_at) - parse(a.created_at);
                     });
+                    if (countEl) countEl.textContent = '(' + sorted.length + ')';
                     grid.innerHTML = sorted.slice(0, 9).map(item => `
                         <div class="history-card" onclick="loadIntake(${item.id});event.stopPropagation()">
                             <strong>Session #${item.id}</strong>
@@ -788,9 +894,11 @@
                         </div>
                     `).join('');
                 } else {
+                    if (countEl) countEl.textContent = '(0)';
                     grid.innerHTML = '<div style="opacity: 0.8;">История пуста</div>';
                 }
             } catch {
+                if (countEl) countEl.textContent = '(0)';
                 grid.innerHTML = '<div style="opacity: 0.8;">Ошибка загрузки</div>';
             }
         }
@@ -843,6 +951,8 @@
             }
         });
 
+                initHistoryMobile();
+        window.addEventListener('resize', initHistoryMobile);
         checkAuth();
         loadHistory();
     </script>
